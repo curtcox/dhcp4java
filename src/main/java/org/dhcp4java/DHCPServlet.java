@@ -55,7 +55,7 @@ public class DHCPServlet {
      * 
      * @param props a Properties containing parameters, as passed to <tt>DHCPCoreServer</tt> 
      */
-    public void init(Properties props) {
+    final public void init(Properties props) {
         // read whatever parameters you need
     }
     
@@ -71,7 +71,7 @@ public class DHCPServlet {
      * @param requestDatagram the datagram received from the client
      * @return response the datagram to send back, or <tt>null</tt> if no answer
      */
-    public DatagramPacket serviceDatagram(DatagramPacket requestDatagram) {
+    final public DatagramPacket serviceDatagram(DatagramPacket requestDatagram) {
         DatagramPacket responseDatagram;
     	
         if (requestDatagram == null) { return null; }
@@ -181,7 +181,7 @@ public class DHCPServlet {
      * @param request DHCP request received from client
      * @return DHCP response to send back, or <tt>null</tt> if no response.
      */
-    protected DHCPPacket doDiscover(DHCPPacket request) {
+    final protected DHCPPacket doDiscover(DHCPPacket request) {
         logger.fine("DISCOVER packet received");
         return null;
     }
@@ -192,7 +192,7 @@ public class DHCPServlet {
      * @param request DHCP request received from client
      * @return DHCP response to send back, or <tt>null</tt> if no response.
      */
-    protected DHCPPacket doRequest(DHCPPacket request) {
+    final protected DHCPPacket doRequest(DHCPPacket request) {
         logger.fine("REQUEST packet received");
         return null;
     }
@@ -203,7 +203,7 @@ public class DHCPServlet {
      * @param request DHCP request received from client
      * @return DHCP response to send back, or <tt>null</tt> if no response.
      */
-    protected DHCPPacket doInform(DHCPPacket request) {
+    final protected DHCPPacket doInform(DHCPPacket request) {
         logger.fine("INFORM packet received");
         return null;
     }
@@ -214,7 +214,7 @@ public class DHCPServlet {
      * @param request DHCP request received from client
      * @return DHCP response to send back, or <tt>null</tt> if no response.
      */
-    protected DHCPPacket doDecline(DHCPPacket request) {
+    final protected DHCPPacket doDecline(DHCPPacket request) {
         logger.fine("DECLINE packet received");
         return null;
     }
@@ -225,7 +225,7 @@ public class DHCPServlet {
      * @param request DHCP request received from client
      * @return DHCP response to send back, or <tt>null</tt> if no response.
      */
-    protected DHCPPacket doRelease(DHCPPacket request) {
+    final protected DHCPPacket doRelease(DHCPPacket request) {
         logger.fine("RELEASE packet received");
         return null;
     }
@@ -243,21 +243,14 @@ public class DHCPServlet {
      * @param requestDatagram datagram received from client
      * @param responseDatagram datagram sent back to client
      */
-    protected void postProcess(DatagramPacket requestDatagram, DatagramPacket responseDatagram) {
+    final protected void postProcess(DatagramPacket requestDatagram, DatagramPacket responseDatagram) {
         // default is nop
     }
-    
-	/**
-	 * @return Returns the server.
-	 */
-	public DHCPCoreServer getServer() {
-		return server;
-	}
 
 	/**
 	 * @param server The server to set.
 	 */
-	public void setServer(DHCPCoreServer server) {
+    final public void setServer(DHCPCoreServer server) {
 		this.server = server;
 	}
 }

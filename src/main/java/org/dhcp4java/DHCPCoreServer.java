@@ -73,16 +73,16 @@ public final class DHCPCoreServer implements Runnable {
     private   static final int    BOUNDED_QUEUE_SIZE = 20;
 
     /** default MTU for ethernet */
-    protected static final int    PACKET_SIZE        = 1500;
+    private static final int    PACKET_SIZE        = 1500;
 
     /** the servlet it must run */
-    protected DHCPServlet        servlet;
+    private DHCPServlet        servlet;
     /** working threads pool. */
-    protected ThreadPoolExecutor threadPool;
+    private ThreadPoolExecutor threadPool;
     /** Consolidated parameters of the server. */
-    protected Properties         properties;
+    private Properties         properties;
     /** Reference of user-provided parameters */
-    protected Properties         userProps;
+    private Properties         userProps;
     /** IP address and port for the server */ 
     private   InetSocketAddress sockAddress = null;
     /** The socket for receiving and sending. */
@@ -124,7 +124,7 @@ public final class DHCPCoreServer implements Runnable {
      * Initialize the server context from the Properties, and open socket.
      *
      */
-    protected void init() throws DHCPServerInitException {
+    private void init() throws DHCPServerInitException {
         if (this.serverSocket != null) {
             throw new IllegalStateException("Server already initialized");
         }
@@ -184,7 +184,7 @@ public final class DHCPCoreServer implements Runnable {
      *
      * @see java.lang.Runnable#run()
      */
-    protected void dispatch() {
+    private void dispatch() {
         try {
             DatagramPacket requestDatagram = new DatagramPacket(
                     new byte[PACKET_SIZE], PACKET_SIZE);
@@ -243,7 +243,7 @@ public final class DHCPCoreServer implements Runnable {
      * @param props Properties loaded from /DHCPd.properties
      * @return the socket address, null if there was a problem
      */
-    protected InetSocketAddress getInetSocketAddress(Properties props) {
+    private InetSocketAddress getInetSocketAddress(Properties props) {
         if (props == null) {
             throw new IllegalArgumentException("null props not allowed");
         }
@@ -294,14 +294,6 @@ public final class DHCPCoreServer implements Runnable {
             }
         }
     }
-    /**
-     * This method stops the server and closes the socket.
-     *
-     */
-    public void stopServer() {
-    	this.stopped = true;
-    	this.serverSocket.close();		// this generates an exception when trying to receive
-    }
 
     private static final Properties DEF_PROPS = new Properties();
 
@@ -337,12 +329,6 @@ public final class DHCPCoreServer implements Runnable {
         }
     }
 
-	/**
-	 * @return Returns the socket address.
-	 */
-	public InetSocketAddress getSockAddress() {
-		return sockAddress;
-	}
 }
 
 

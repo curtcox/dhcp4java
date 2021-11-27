@@ -63,17 +63,4 @@ public final class DHCPBadPacketException extends IllegalArgumentException {
     public DHCPBadPacketException(String message, Throwable cause) {
         super(message, cause);
     }
-    /**
-     * Constructs a new exception with the specified cause and a detail message 
-     * of <tt>(cause==null ? null : cause.toString())</tt>
-     * (which typically contains the class and detail message of cause). 
-     * 
-     * @param cause the cause (which is saved for later retrieval by the 
-     * 			<tt>Throwable.getCause()</tt> method).
-     * 			(A <tt>null</tt> value is permitted, and indicates that the cause 
-     * 			is nonexistent or unknown.)
-     */
-    public DHCPBadPacketException(Throwable cause) {
-        super(cause);
-    }
 }

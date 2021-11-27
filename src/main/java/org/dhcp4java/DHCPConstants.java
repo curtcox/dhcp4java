@@ -165,7 +165,7 @@ public final class DHCPConstants {
     /** Broadcast Address */
     public static final InetAddress INADDR_BROADCAST = getInaddrBroadcast();
 
-    private static final InetAddress getInaddrAny() {
+    private static InetAddress getInaddrAny() {
     	try {
     		final byte[] rawAddr = { (byte)0, (byte)0, (byte)0, (byte)0 };
     		return InetAddress.getByAddress(rawAddr);
@@ -174,7 +174,7 @@ public final class DHCPConstants {
     		throw new IllegalStateException("Unable to generate INADDR_ANY");
     	}
     }
-    private static final InetAddress getInaddrBroadcast() {
+    private static InetAddress getInaddrBroadcast() {
     	try {
             final byte[] rawAddr = { (byte) -1, (byte) -1, (byte) -1, (byte) -1 };
     		return InetAddress.getByAddress(rawAddr);
@@ -183,81 +183,7 @@ public final class DHCPConstants {
     		throw new IllegalStateException("Unable to generate INADDR_BROADCAST");
     	}
     }
-    
-    /**
-     * Returns a map associating a BootCode and the user-readable name.
-     * 
-     * <P>Currently:<br>
-     * 	1=BOOTREQUEST<br>
-     * 	2=BOOTREPLY
-     * @return the map
-     */
-    public static final Map<Byte, String> getBootNamesMap() {
-    	return _BOOT_NAMES;
-    }
-    
-    /**
-     * Returns a map associating a HType and the user-readable name.
-     * 
-     * <p>Ex: 1=HTYPE_ETHER
-     * @return the map
-     */
-    public static final Map<Byte, String> getHtypesMap() {
-    	return _HTYPE_NAMES;
-    }
 
-    /**
-     * Returns a map associating a DHCP code and the user-readable name.
-     * 
-     * <p>ex: 1=DHCPDISCOVER
-     * @return the map
-     */
-    public static final Map<Byte, String> getDhcpCodesMap() {
-    	return _DHCP_CODES;
-    }
-
-    /**
-     * Returns a map associating a DHCP option code and the user-readable name.
-     * 
-     * <p>ex: 1=DHO_SUBNET_MASK, 51=DHO_DHCP_LEASE_TIME, 
-     * @return the map
-     */
-    public static final Map<Byte, String> getDhoNamesMap() {
-    	return _DHO_NAMES;
-    }
-
-    /**
-     * Returns a map associating a user-readable DHCP option name and the option code.
-     * 
-     * <p>ex: "DHO_SUBNET_MASK"=1, "DHO_DHCP_LEASE_TIME"=51 
-     * @return the map
-     */
-    public static final Map<String, Byte> getDhoNamesReverseMap() {
-    	return _DHO_NAMES_REV;
-    }
-
-    /**
-     * Converts a DHCP option name into the option code.
-     * @param name user-readable option name
-     * @return the option code
-     * @throws NullPointerException name is <tt>null</t>.
-     */
-    public static final Byte getDhoNamesReverse(String name) {
-    	if (name == null) {
-    		throw new NullPointerException();
-    	}
-    	return _DHO_NAMES_REV.get(name);
-    }
-
-    /**
-     * Converts a DHCP code into a user-readable DHCP option name.
-     * @param code DHCP option code
-     * @return user-readable DHCP option name
-     */
-    public static final String getDhoName(byte code) {
-    	return _DHO_NAMES.get(code);
-    }
-    
     // sanity check values
     static final int _DHCP_MIN_LEN           = 548;
     static final int _DHCP_DEFAULT_MAX_LEN   = 576;	// max default size for client

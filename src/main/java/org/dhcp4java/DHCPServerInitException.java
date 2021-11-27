@@ -27,26 +27,11 @@ package org.dhcp4java;
 public final class DHCPServerInitException extends Exception {
 	private static final long serialVersionUID = 1L;
 	
-	/**
-	 * 
-	 *
-	 */
-	public DHCPServerInitException() {
-		super();
-	}
-	
     /**
      * @param message
      */
     public DHCPServerInitException(String message) {
         super(message);
-    }
-
-    /**
-     * @param cause
-     */
-    public DHCPServerInitException(Throwable cause) {
-        super(cause);
     }
 
     /**

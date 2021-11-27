@@ -380,28 +380,6 @@ public final class DHCPPacket implements Cloneable, Serializable {
     }
 
     /**
-     * Factory for creating <tt>DHCPPacket</tt> objects by parsing a
-     * <tt>byte[]</tt> e.g. from a datagram.
-     * 
-     * <p>This method allows you to specify non-strict mode which is much more
-     * tolerant for packet options. By default, any problem seen during DHCP option
-     * parsing causes a DHCPBadPacketException to be thrown.
-     *
-     * @param buf buffer for holding the incoming datagram.
-     * @param offset the offset for the buffer.
-     * @param length the number of bytes to read.
-     * @param strict do we parse in strict mode?
-     * @return the newly create <tt>DHCPPacket</tt> instance
-     * @throws DHCPBadPacketException the datagram is malformed.
-     */
-    public static DHCPPacket getPacket(byte[] buf, int offset, int length, boolean strict) throws DHCPBadPacketException {
-        DHCPPacket packet = new DHCPPacket();
-        // all parameters are checked in marshall()
-        packet.marshall(buf, offset, length, null, 0, strict);
-        return packet;
-    }
-
-    /**
      * Returns a copy of this <tt>DHCPPacket</tt>.
      * 
      * <p>The <tt>truncated</tt> flag is reset.
@@ -545,6 +523,7 @@ public final class DHCPPacket implements Cloneable, Serializable {
             assert(opt.getValueFast() != null);
         }
     }
+
     /** 
      * Convert a specified byte array containing a DHCP message into a
      * DHCPMessage object.
@@ -861,39 +840,6 @@ public final class DHCPPacket implements Cloneable, Serializable {
     // getters and setters
 
     /**
-     * Returns the comment associated to this packet.
-     *
-     * <p>This field can be used freely and has no influence on the real network datagram.
-     * It can be used to store a transaction number or any other information
-     *
-     * @return the _comment field.
-     */
-    public String getComment() {
-        return this.comment;
-    }
-    /**
-     * Sets the comment associated to this packet.
-     *
-     * <p>This field can be used freely and has no influence on the real network datagram.
-     * It can be used to store a transaction number or any other information
-     *
-     * @param comment The comment to set.
-     */
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-    /**
-     * Returns the chaddr field (Client hardware address - typically MAC address).
-     *
-     * <p>Returns the byte[16] raw buffer. Only the first <tt>hlen</tt> bytes are valid.
-     *
-     * @return the chaddr field.
-     */
-    public byte[] getChaddr() {
-        return this.chaddr.clone();
-    }
-
-    /**
      * Appends the chaddr field (Client hardware address - typically MAC address) as
      * a hex string to this string buffer.
      *
@@ -907,32 +853,6 @@ public final class DHCPPacket implements Cloneable, Serializable {
         return buffer;
     }
     
-    /**
-     * Return the hardware address (@MAC) as an <tt>HardwareAddress</tt> object.
-     * 
-     * @return the <tt>HardwareAddress</tt> object
-     */
-    public HardwareAddress getHardwareAddress() {
-    	int len = this.hlen & 0xff;
-    	if (len > 16) {
-    		len = 16;
-    	}
-    	byte[] buf = new byte[len];
-    	System.arraycopy(this.chaddr, 0, buf, 0, len);
-    	return new HardwareAddress(this.htype, buf);
-    }
-
-    /**
-     * Returns the chaddr field (Client hardware address - typically MAC address) as 
-     * a hex string.
-     *
-     * <p>Only first <tt>hlen</tt> bytes are printed, as uppercase hex string.
-     *
-     * @return the chaddr field as hex string.
-     */
-    public String getChaddrAsHex() {
-        return this.appendChaddrAsHex(new StringBuilder(this.hlen & 0xFF)).toString();
-    }
     /**
      * Sets the chaddr field (Client hardware address - typically MAC address).
      *
@@ -956,80 +876,7 @@ public final class DHCPPacket implements Cloneable, Serializable {
             Arrays.fill(this.chaddr, (byte) 0);
         }
     }
-    /**
-     * Sets the chaddr field - from an hex String.
-     * 
-     * @param hex the chaddr in hex format
-     */
-    public void setChaddrHex(String hex) {
-        this.setChaddr(hex2Bytes(hex));
-    }
-    /**
-     * Returns the ciaddr field (Client IP Address).
-     * 
-     * @return the ciaddr field converted to <tt>InetAddress</tt> object.
-     */
-    public InetAddress getCiaddr() {
-        try {
-            return InetAddress.getByAddress(this.getCiaddrRaw());
-        } catch (UnknownHostException e) {
-            logger.log(Level.SEVERE, "Unexpected UnknownHostException", e);
-            return null;    // normaly impossible
-        }
-    }
 
-    /**
-     * Returns the ciaddr field (Client IP Address).
-     *
-     * <p>This is the low-level maximum performance getter for this field.
-     *
-     * @return Returns the ciaddr as raw byte[4].
-     */
-    public byte[] getCiaddrRaw() {
-        return this.ciaddr.clone();
-    }
-
-    /**
-     * Sets the ciaddr field (Client IP Address).
-     *
-     * <p>Ths <tt>ciaddr</tt> field must be of <tt>Inet4Address</tt> class or
-     * an <tt>IllegalArgumentException</tt> is thrown.
-     *
-     * @param ciaddr The ciaddr to set.
-     */
-    public void setCiaddr(InetAddress ciaddr) {
-        if (!(ciaddr instanceof Inet4Address)) {
-            throw new IllegalArgumentException("Inet4Address required");
-        }
-        this.setCiaddrRaw(ciaddr.getAddress());
-    }
-    /**
-     * Sets the ciaddr field (Client IP Address).
-     *
-     * @param ciaddr The ciaddr to set.
-     * @throws UnknownHostException
-     */
-    public void setCiaddr(String ciaddr) throws UnknownHostException {
-        this.setCiaddr(InetAddress.getByName(ciaddr));
-    }
-    /**
-     * Sets the ciaddr field (Client IP Address).
-     *
-     * <p><tt>ciaddr</tt> must be a 4 bytes array, or an <tt>IllegalArgumentException</tt>
-     * is thrown.
-     *
-     * <p>This is the low-level maximum performance setter for this field.
-     * The array is internally copied so any further modification to <tt>ciaddr</tt>
-     * parameter has no side effect.
-     *
-     * @param ciaddr The ciaddr to set.
-     */
-    public void setCiaddrRaw(byte[] ciaddr) {
-        if (ciaddr.length != 4) {
-            throw new IllegalArgumentException("4-byte array required");
-        }
-        System.arraycopy(ciaddr, 0, this.ciaddr, 0, 4);
-    }
     /**
      * Returns the file field (Boot File Name).
      *
@@ -1093,101 +940,12 @@ public final class DHCPPacket implements Cloneable, Serializable {
     }
 
     /**
-     * Returns the flags field.
-     *
-     * @return the flags field.
-     */
-    public short getFlags() {
-        return this.flags;
-    }
-
-    /**
      * Sets the flags field.
      *
      * @param flags The flags field to set.
      */
     public void setFlags(short flags) {
         this.flags = flags;
-    }
-
-    /**
-     * Returns the giaddr field (Relay agent IP address).
-     *
-     * @return the giaddr field converted to <tt>InetAddress</tt> object.
-     */
-    public InetAddress getGiaddr() {
-        try {
-            return InetAddress.getByAddress(this.getGiaddrRaw());
-        } catch (UnknownHostException e) {
-            logger.log(Level.SEVERE, "Unexpected UnknownHostException", e);
-            return null;    // normaly impossible
-        }
-    }
-
-    /**
-     * Returns the giaddr field (Relay agent IP address).
-     *
-     * <p>This is the low-level maximum performance getter for this field.
-     *
-     * @return Returns the giaddr as raw byte[4].
-     */
-    public byte[] getGiaddrRaw() {
-        return this.giaddr.clone();
-    }
-
-    /**
-     * Sets the giaddr field (Relay agent IP address).
-     *
-     * <p>Ths <tt>giaddr</tt> field must be of <tt>Inet4Address</tt> class or
-     * an <tt>IllegalArgumentException</tt> is thrown.
-     *
-     * @param giaddr The giaddr to set.
-     */
-    public void setGiaddr(InetAddress giaddr) {
-        if (!(giaddr instanceof Inet4Address)) {
-            throw new IllegalArgumentException("Inet4Address required");
-        }
-        this.setGiaddrRaw(giaddr.getAddress());
-    }
-
-    /**
-     * Sets the giaddr field (Relay agent IP address).
-     *
-     * @param giaddr The giaddr to set.
-     * @throws UnknownHostException
-     */
-    public void setGiaddr(String giaddr) throws UnknownHostException {
-        this.setGiaddr(InetAddress.getByName(giaddr));
-    }
-
-    /**
-     * Sets the giaddr field (Relay agent IP address).
-     *
-     * <p><tt>giaddr</tt> must be a 4 bytes array, or an <tt>IllegalArgumentException</tt>
-     * is thrown.
-     *
-     * <p>This is the low-level maximum performance setter for this field.
-     * The array is internally copied so any further modification to <tt>ciaddr</tt>
-     * parameter has no side effect.
-     *
-     * @param giaddr The giaddr to set.
-     */
-    public void setGiaddrRaw(byte[] giaddr) {
-        if (giaddr.length != 4) {
-            throw new IllegalArgumentException("4-byte array required");
-        }
-        System.arraycopy(giaddr, 0, this.giaddr, 0, 4);
-    }
-
-    /**
-     * Returns the hlen field (Hardware address length).
-     *
-     * <p>Typical value is 6 for ethernet - 6 bytes MAC address.
-     *
-     * @return the hlen field.
-     */
-    public byte getHlen() {
-        return this.hlen;
     }
 
     /**
@@ -1204,39 +962,12 @@ public final class DHCPPacket implements Cloneable, Serializable {
     }
 
     /**
-     * Returns the hops field.
-     *
-     * @return the hops field.
-     */
-    public byte getHops() {
-        return this.hops;
-    }
-
-    /**
      * Sets the hops field.
      *
      * @param hops The hops to set.
      */
     public void setHops(byte hops) {
         this.hops = hops;
-    }
-
-    /**
-     * Returns the htype field (Hardware address length).
-     *
-     * <p>Predefined values are:
-     * <pre>
-     * HTYPE_ETHER (1)
-     * HTYPE_IEEE802 (6)
-     * HTYPE_FDDI (8)
-     * </pre>
-     *
-     * <p>Typical value is <tt>HTYPE_ETHER</tt>.
-     *
-     * @return the htype field.
-     */
-    public byte getHtype() {
-        return this.htype;
     }
 
     /**
@@ -1322,136 +1053,12 @@ public final class DHCPPacket implements Cloneable, Serializable {
     }
 
     /**
-     * Returns the padding portion of the packet.
-     *
-     * <p>This byte array follows the DHCP Options.
-     * Normally, its content is irrelevant.
-     *
-     * @return Returns the padding.
-     */
-    public byte[] getPadding() {
-        return this.padding.clone();
-    }
-
-    /**
-     * Sets the padding buffer.
-     *
-     * <p>This byte array follows the DHCP Options.
-     * Normally, its content is irrelevant.
-     *
-     * <p>If <tt>paddig</tt> is null, it is set to an empty buffer.
-     *
-     * <p>Padding is automatically added at the end of the datagram when calling
-     * <tt>serialize()</tt> to match DHCP minimal packet size.
-     * 
-     * @param padding The padding to set.
-     */
-    public void setPadding(byte[] padding) {
-        this.padding = ((padding == null) ? new byte[0] : padding.clone());
-    }
-
-    /**
-     * Sets the padding buffer with <tt>length</tt> zero bytes.
-     * 
-     * <p>This is a short cut for <tt>setPadding(new byte[length])</tt>.
-     * 
-     * @param length size of the padding buffer
-     */
-    public void setPaddingWithZeroes(int length) {
-        if (length < 0) {
-            length = 0;
-        }
-        if (length > _DHCP_MAX_MTU) {
-            throw new IllegalArgumentException("length is > " + _DHCP_MAX_MTU);
-        }
-        this.setPadding(new byte[length]);
-    }
-
-    /**
-     * Returns the secs field (seconds elapsed).
-     *
-     * @return the secs field.
-     */
-    public short getSecs() {
-        return this.secs;
-    }
-
-    /**
      * Sets the secs field (seconds elapsed).
      *
      * @param secs The secs to set.
      */
     public void setSecs(short secs) {
         this.secs = secs;
-    }
-
-    /**
-     * Returns the siaddr field (IP address of next server).
-     *
-     * @return the siaddr field converted to <tt>InetAddress</tt> object.
-     */
-    public InetAddress getSiaddr() {
-        try {
-            return InetAddress.getByAddress(this.getSiaddrRaw());
-        } catch (UnknownHostException e) {
-            logger.log(Level.SEVERE, "Unexpected UnknownHostException", e);
-            return null;    // normaly impossible
-        }
-    }
-
-    /**
-     * Returns the siaddr field (IP address of next server).
-     *
-     * <p>This is the low-level maximum performance getter for this field.
-     *
-     * @return Returns the siaddr as raw byte[4].
-     */
-    public byte[] getSiaddrRaw() {
-        return this.siaddr.clone();
-    }
-
-    /**
-     * Sets the siaddr field (IP address of next server).
-     *
-     * <p>Ths <tt>siaddr</tt> field must be of <tt>Inet4Address</tt> class or
-     * an <tt>IllegalArgumentException</tt> is thrown.
-     *
-     * @param siaddr The siaddr to set.
-     */
-    public void setSiaddr(InetAddress siaddr) {
-        if (!(siaddr instanceof Inet4Address)) {
-            throw new IllegalArgumentException("Inet4Address required");
-        }
-        this.setSiaddrRaw(siaddr.getAddress());
-    }
-
-    /**
-     * Sets the siaddr field (IP address of next server).
-     *
-     * @param siaddr The siaddr to set.
-     * @throws UnknownHostException
-     */
-    public void setSiaddr(String siaddr) throws UnknownHostException {
-        this.setSiaddr(InetAddress.getByName(siaddr));
-    }
-
-    /**
-     * Sets the siaddr field (IP address of next server).
-     *
-     * <p><tt>siaddr</tt> must be a 4 bytes array, or an <tt>IllegalArgumentException</tt>
-     * is thrown.
-     *
-     * <p>This is the low-level maximum performance setter for this field.
-     * The array is internally copied so any further modification to <tt>ciaddr</tt>
-     * parameter has no side effect.
-     *
-     * @param siaddr The siaddr to set.
-     */
-    public void setSiaddrRaw(byte[] siaddr) {
-        if (siaddr.length != 4) {
-            throw new IllegalArgumentException("4-byte array required");
-        }
-        System.arraycopy(siaddr, 0, this.siaddr, 0, 4);
     }
 
     /**
@@ -1477,56 +1084,6 @@ public final class DHCPPacket implements Cloneable, Serializable {
     }
 
     /**
-     * Sets the sname field (Optional server host name) as String.
-     *
-     * <p>The string is first converted to a byte[] array using transparent
-     * encoding. If the resulting buffer size is > 64, an <tt>IllegalArgumentException</tt>
-     * is thrown.
-     *
-     * <p>If <tt>sname</tt> parameter is null, the buffer is filled with zeros.
-     *
-     * @param sname The sname field to set.
-     * @throws IllegalArgumentException string too long
-     */
-    public void setSname(String sname) {
-        this.setSnameRaw(stringToBytes(sname));
-    }
-
-    /**
-     * Sets the sname field (Optional server host name) as String.
-     *
-     * <p>If the buffer size is > 64, an <tt>IllegalArgumentException</tt>
-     * is thrown.
-     *
-     * <p>If <tt>sname</tt> parameter is null, the buffer is filled with zeros.
-     *
-     * <p>This is the low-level maximum performance setter for this field.
-     *
-     * @param sname The sname field to set.
-     * @throws IllegalArgumentException string too long
-     */
-    public void setSnameRaw(byte[] sname) {
-        if (sname != null) {
-            if (sname.length > this.sname.length) {
-                throw new IllegalArgumentException("Sname is too long:" + sname.length + " max is:" + this.sname.length);
-            }
-            Arrays.fill(this.sname, (byte) 0);
-            System.arraycopy(sname, 0, this.sname, 0, sname.length);
-        } else {
-            Arrays.fill(this.sname, (byte) 0);
-        }
-    }
-
-    /**
-     * Returns the xid field (Transaction ID).
-     *
-     * @return Returns the xid.
-     */
-    public int getXid() {
-        return this.xid;
-    }
-
-    /**
      * Sets the xid field (Transaction ID).
      *
      * <p>This field is random generated by the client, and used by the client and
@@ -1539,74 +1096,6 @@ public final class DHCPPacket implements Cloneable, Serializable {
     }
 
     /**
-     * Returns the yiaddr field ('your' IP address).
-     *
-     * @return the yiaddr field converted to <tt>InetAddress</tt> object.
-     */
-    public InetAddress getYiaddr() {
-        try {
-            return InetAddress.getByAddress(this.getYiaddrRaw());
-        } catch (UnknownHostException e) {
-            logger.log(Level.SEVERE, "Unexpected UnknownHostException", e);
-            return null;    // normaly impossible
-        }
-    }
-
-    /**
-     * Returns the yiaddr field ('your' IP address).
-     *
-     * <p>This is the low-level maximum performance getter for this field.
-     *
-     * @return Returns the yiaddr as raw byte[4].
-     */
-    public byte[] getYiaddrRaw() {
-        return this.yiaddr.clone();
-    }
-
-    /**
-     * Sets the yiaddr field ('your' IP address).
-     *
-     * <p>Ths <tt>yiaddr</tt> field must be of <tt>Inet4Address</tt> class or
-     * an <tt>IllegalArgumentException</tt> is thrown.
-     *
-     * @param yiaddr The yiaddr to set.
-     */
-    public void setYiaddr(InetAddress yiaddr) {
-        if (!(yiaddr instanceof Inet4Address)) {
-            throw new IllegalArgumentException("Inet4Address required");
-        }
-        this.setYiaddrRaw(yiaddr.getAddress());
-    }
-
-    /**
-     * Sets the yiaddr field ('your' IP address).
-     *
-     * @param yiaddr The yiaddr to set.
-     * @throws UnknownHostException
-     */
-    public void setYiaddr(String yiaddr) throws UnknownHostException {
-        this.setYiaddr(InetAddress.getByName(yiaddr));
-    }
-
-    /**
-     * Sets the yiaddr field ('your' IP address).
-     *
-     * <p><tt>yiaddr</tt> must be a 4 bytes array, or an <tt>IllegalArgumentException</tt>
-     * is thrown.
-     *
-     * <p>This is the low-level maximum performance setter for this field.
-     * The array is internally copied so any further modification to <tt>ciaddr</tt>
-     * parameter has no side effect.
-     *
-     * @param yiaddr The yiaddr to set.
-     */
-    public void setYiaddrRaw(byte[] yiaddr) {
-        if (yiaddr.length != 4) {
-            throw new IllegalArgumentException("4-byte array required");
-        }
-        System.arraycopy(yiaddr, 0, this.yiaddr, 0, 4);
-    }
-    /**
      * Return the DHCP Option Type.
      * 
      * <p>This is a short-cut for <tt>getOptionAsByte(DHO_DHCP_MESSAGE_TYPE)</tt>.
@@ -1617,44 +1106,6 @@ public final class DHCPPacket implements Cloneable, Serializable {
         return this.getOptionAsByte(DHO_DHCP_MESSAGE_TYPE);
     }
 
-    /**
-     * Sets the DHCP Option Type.
-     * 
-     * <p>This is a short-cur for <tt>setOptionAsByte(DHO_DHCP_MESSAGE_TYPE, optionType);</tt>.
-     * 
-     * @param optionType
-     */
-    public void setDHCPMessageType(byte optionType) {
-        this.setOptionAsByte(DHO_DHCP_MESSAGE_TYPE, optionType);
-    }
-
-    /**
-     * Indicates that the DHCP packet has been truncated and did not finished
-     * with a 0xFF option. This parameter is set only when parsing packets in
-     * non-strict mode (which is not the default behaviour).
-     *
-     * <p>This field is read-only and can be <tt>true</tt> only with objects created
-     * by parsing a Datagram - getPacket() methods.
-     *
-     * <p>This field is cleared if the object is cloned.
-     *
-     * @return the truncated field.
-     */
-    public boolean isTruncated() {
-        return this.truncated;
-    }
-
-    /**
-     * Wrapper function for getValueAsNum() in DHCPOption. Returns a numerical option: int, short or byte.
-     * 
-     * @param code DHCP option code
-     * @return Integer object or <tt>null</tt>
-     */
-    public Integer getOptionAsNum(byte code) {
-    	DHCPOption opt = this.getOption(code);
-    	return (opt != null) ? opt.getValueAsNum() : null; 
-    }
-    
     /**
      * Returns a DHCP Option as Byte format.
      *
@@ -1688,295 +1139,6 @@ public final class DHCPPacket implements Cloneable, Serializable {
     }
 
     /**
-     * Returns a DHCP Option as Short format.
-     *
-     * <p>This method is only allowed for the following option codes:
-     * <pre>
-     * DHO_BOOT_SIZE(13)
-     * DHO_MAX_DGRAM_REASSEMBLY(22)
-     * DHO_INTERFACE_MTU(26)
-     * DHO_DHCP_MAX_MESSAGE_SIZE(57)
-     * </pre>
-     *
-     * @param code the option code.
-     * @return the option value, <tt>null</tt> if option is not present.
-     * @throws IllegalArgumentException the option code is not in the list above.
-     * @throws DHCPBadPacketException the option value in packet is of wrong size.
-     */
-    public Short getOptionAsShort(byte code) throws IllegalArgumentException {
-        DHCPOption opt = this.getOption(code);
-        return (opt == null) ? null : opt.getValueAsShort();
-    }
-
-    /**
-     * Returns a DHCP Option as Integer format.
-     * 
-     * <p>This method is only allowed for the following option codes:
-     * <pre>
-     * DHO_TIME_OFFSET(2)
-     * DHO_PATH_MTU_AGING_TIMEOUT(24)
-     * DHO_ARP_CACHE_TIMEOUT(35)
-     * DHO_TCP_KEEPALIVE_INTERVAL(38)
-     * DHO_DHCP_LEASE_TIME(51)
-     * DHO_DHCP_RENEWAL_TIME(58)
-     * DHO_DHCP_REBINDING_TIME(59)
-     * </pre>
-     * 
-     * @param code the option code.
-     * @return the option value, <tt>null</tt> if option is not present.
-     * @throws IllegalArgumentException the option code is not in the list above.
-     * @throws DHCPBadPacketException the option value in packet is of wrong size.
-     */
-    public Integer getOptionAsInteger(byte code) throws IllegalArgumentException {
-        DHCPOption opt = this.getOption(code);
-        return (opt == null) ? null : opt.getValueAsInt();
-    }
-
-    /**
-     * Returns a DHCP Option as InetAddress format.
-     *
-     * <p>This method is only allowed for the following option codes:
-     * <pre>
-     * DHO_SUBNET_MASK(1)
-     * DHO_SWAP_SERVER(16)
-     * DHO_BROADCAST_ADDRESS(28)
-     * DHO_ROUTER_SOLICITATION_ADDRESS(32)
-     * DHO_DHCP_REQUESTED_ADDRESS(50)
-     * DHO_DHCP_SERVER_IDENTIFIER(54)
-     * DHO_SUBNET_SELECTION(118)
-     * </pre>
-     *
-     * @param code the option code.
-     * @return the option value, <tt>null</tt> if option is not present.
-     * @throws IllegalArgumentException the option code is not in the list above.
-     * @throws DHCPBadPacketException the option value in packet is of wrong size.
-     */
-    public InetAddress getOptionAsInetAddr(byte code) throws IllegalArgumentException {
-        DHCPOption opt = this.getOption(code);
-        return (opt == null) ? null : opt.getValueAsInetAddr();
-    }
-
-    /**
-     * Returns a DHCP Option as String format.
-     *
-     * <p>This method is only allowed for the following option codes:
-     * <pre>
-     * DHO_HOST_NAME(12)
-     * DHO_MERIT_DUMP(14)
-     * DHO_DOMAIN_NAME(15)
-     * DHO_ROOT_PATH(17)
-     * DHO_EXTENSIONS_PATH(18)
-     * DHO_NETBIOS_SCOPE(47)
-     * DHO_DHCP_MESSAGE(56)
-     * DHO_VENDOR_CLASS_IDENTIFIER(60)
-     * DHO_NWIP_DOMAIN_NAME(62)
-     * DHO_NIS_DOMAIN(64)
-     * DHO_NIS_SERVER(65)
-     * DHO_TFTP_SERVER(66)
-     * DHO_BOOTFILE(67)
-     * DHO_NDS_TREE_NAME(86)
-     * DHO_USER_AUTHENTICATION_PROTOCOL(98)
-     * </pre>
-     *
-     * @param code the option code.
-     * @return the option value, <tt>null</tt> if option is not present.
-     * @throws IllegalArgumentException the option code is not in the list above.
-     */
-    public String getOptionAsString(byte code) throws IllegalArgumentException {
-        DHCPOption opt = this.getOption(code);
-        return (opt == null) ? null : opt.getValueAsString();
-    }
-
-    /**
-     * Returns a DHCP Option as Short array format.
-     *
-     * <p>This method is only allowed for the following option codes:
-     * <pre>
-     * DHO_PATH_MTU_PLATEAU_TABLE(25)
-     * DHO_NAME_SERVICE_SEARCH(117)
-     * </pre>
-     *
-     * @param code the option code.
-     * @return the option value array, <tt>null</tt> if option is not present.
-     * @throws IllegalArgumentException the option code is not in the list above.
-     * @throws DHCPBadPacketException the option value in packet is of wrong size.
-     */
-    public short[] getOptionAsShorts(byte code) throws IllegalArgumentException {
-        DHCPOption opt = this.getOption(code);
-        return (opt == null) ? null : opt.getValueAsShorts();
-    }
-
-    /**
-     * Returns a DHCP Option as InetAddress array format.
-     *
-     * <p>This method is only allowed for the following option codes:
-     * <pre>
-     * DHO_ROUTERS(3)
-     * DHO_TIME_SERVERS(4)
-     * DHO_NAME_SERVERS(5)
-     * DHO_DOMAIN_NAME_SERVERS(6)
-     * DHO_LOG_SERVERS(7)
-     * DHO_COOKIE_SERVERS(8)
-     * DHO_LPR_SERVERS(9)
-     * DHO_IMPRESS_SERVERS(10)
-     * DHO_RESOURCE_LOCATION_SERVERS(11)
-     * DHO_POLICY_FILTER(21)
-     * DHO_STATIC_ROUTES(33)
-     * DHO_NIS_SERVERS(41)
-     * DHO_NTP_SERVERS(42)
-     * DHO_NETBIOS_NAME_SERVERS(44)
-     * DHO_NETBIOS_DD_SERVER(45)
-     * DHO_FONT_SERVERS(48)
-     * DHO_X_DISPLAY_MANAGER(49)
-     * DHO_MOBILE_IP_HOME_AGENT(68)
-     * DHO_SMTP_SERVER(69)
-     * DHO_POP3_SERVER(70)
-     * DHO_NNTP_SERVER(71)
-     * DHO_WWW_SERVER(72)
-     * DHO_FINGER_SERVER(73)
-     * DHO_IRC_SERVER(74)
-     * DHO_STREETTALK_SERVER(75)
-     * DHO_STDA_SERVER(76)
-     * DHO_NDS_SERVERS(85)
-     * </pre>
-     *
-     * @param code the option code.
-     * @return the option value array, <tt>null</tt> if option is not present.
-     * @throws IllegalArgumentException the option code is not in the list above.
-     * @throws DHCPBadPacketException the option value in packet is of wrong size.
-     */
-    public InetAddress[] getOptionAsInetAddrs(byte code) throws IllegalArgumentException {
-        DHCPOption opt = this.getOption(code);
-        return (opt == null) ? null : opt.getValueAsInetAddrs();
-    }
-
-    /**
-     * Returns a DHCP Option as Byte array format.
-     *
-     * <p>This method is only allowed for the following option codes:
-     * <pre>
-     * DHO_DHCP_PARAMETER_REQUEST_LIST(55)
-     * </pre>
-     *
-     * <p>Note: this mehtod is similar to getOptionRaw, only with option type checking.
-     *
-     * @param code the option code.
-     * @return the option value array, <tt>null</tt> if option is not present.
-     * @throws IllegalArgumentException the option code is not in the list above.
-     */
-    public byte[] getOptionAsBytes(byte code) throws IllegalArgumentException {
-        DHCPOption opt = this.getOption(code);
-        return (opt == null) ? null : opt.getValueAsBytes();
-    }
-
-    /**
-     * Sets a DHCP Option as Byte format.
-     *
-     * <p>See <tt>DHCPOption</tt> for allowed option codes.
-     *
-     * @param code the option code.
-     * @param val the value
-     * @throws IllegalArgumentException the option code is not in the list above.
-     */
-    public void setOptionAsByte(byte code, byte val) {
-        this.setOption(DHCPOption.newOptionAsByte(code, val));
-    }
-
-    /**
-     * Sets a DHCP Option as Short format.
-     *
-     * <p>See <tt>DHCPOption</tt> for allowed option codes.
-     *
-     * @param code the option code.
-     * @param val the value
-     * @throws IllegalArgumentException the option code is not in the list above.
-     */
-    public void setOptionAsShort(byte code, short val) {
-        this.setOption(DHCPOption.newOptionAsShort(code, val));
-    }
-
-    /**
-     * Sets a DHCP Option as Integer format.
-     *
-     * <p>See <tt>DHCPOption</tt> for allowed option codes.
-     *
-     * @param code the option code.
-     * @param val the value
-     * @throws IllegalArgumentException the option code is not in the list above.
-     */
-    public void setOptionAsInt(byte code, int val) {
-        this.setOption(DHCPOption.newOptionAsInt(code, val));
-    }
-
-    /**
-     * Sets a DHCP Option as InetAddress format.
-     *
-     * <p>See <tt>DHCPOption</tt> for allowed option codes.
-     *
-     * @param code the option code.
-     * @param val the value
-     * @throws IllegalArgumentException the option code is not in the list above.
-     */
-    public void setOptionAsInetAddress(byte code, InetAddress val) {
-        this.setOption(DHCPOption.newOptionAsInetAddress(code, val));
-    }
-
-    /**
-     * Sets a DHCP Option as InetAddress format.
-     *
-     * <p>See <tt>DHCPOption</tt> for allowed option codes.
-     *
-     * @param code the option code in String format.
-     * @param val the value
-     * @throws UnknownHostException cannot find the address
-     * @throws IllegalArgumentException the option code is not in the list above.
-     */
-    public void setOptionAsInetAddress(byte code, String val) throws UnknownHostException {
-        this.setOption(DHCPOption.newOptionAsInetAddress(code, InetAddress.getByName(val)));
-    }
-
-    /**
-     * Sets a DHCP Option as InetAddress array format.
-     *
-     * <p>See <tt>DHCPOption</tt> for allowed option codes.
-     *
-     * @param code the option code.
-     * @param val the value array
-     * @throws IllegalArgumentException the option code is not in the list above.
-     */
-    public void setOptionAsInetAddresses(byte code, InetAddress[] val) {
-        this.setOption(DHCPOption.newOptionAsInetAddresses(code, val));
-    }
-
-    /**
-     * Sets a DHCP Option as String format.
-     *
-     * <p>See <tt>DHCPOption</tt> for allowed option codes.
-     *
-     * @param code the option code.
-     * @param val the value
-     * @throws IllegalArgumentException the option code is not in the list above.
-     */
-    public void setOptionAsString(byte code, String val) {
-        this.setOption(DHCPOption.newOptionAsString(code, val));
-    }
-
-    /**
-     * Returns the option as raw byte[] buffer.
-     *
-     * <p>This is the low-level maximum performance getter for options.
-     * No byte[] copy is completed to increase performance.
-     *
-     * @param code option code
-     * @return Returns the option as raw <tt>byte[]</tt>, or <tt>null</tt> if
-     * the option is not present.
-     */
-    public byte[] getOptionRaw(byte code) {
-        final DHCPOption opt = this.getOption(code);
-        return ((opt == null) ? null : opt.getValueFast());
-    }
-
-    /**
      * Returns the option as DHCPOption object.
      *
      * <p>This is the low-level maximum performance getter for options.
@@ -1998,16 +1160,6 @@ public final class DHCPPacket implements Cloneable, Serializable {
     }
 
     /**
-     * Tests whether an option code is present in the packet.
-     *
-     * @param code DHCP option code
-     * @return true if option is present
-     */
-    public boolean containsOption(byte code) {
-        return this.options.containsKey(code);
-    }
-
-    /**
      * Return an ordered list/collection of all options.
      *
      * <p>The Collection is read-only.
@@ -2018,34 +1170,6 @@ public final class DHCPPacket implements Cloneable, Serializable {
         return Collections.unmodifiableCollection(this.options.values());    // read only
     }
 
-    /**
-     * Return an array of all DHCP options.
-     *
-     * @return the options array
-     */
-    public DHCPOption[] getOptionsArray() {
-        return this.options.values().toArray(new DHCPOption[this.options.size()]);
-    }
-
-    /**
-     * Sets the option specified for the option.
-     *
-     * <p>If <tt>buf</tt> is <tt>null</tt>, the option is cleared.
-     *
-     * <p>Options are sorted in creation order. Previous values are replaced.
-     *
-     * <p>This is the low-level maximum performance setter for options.
-     *
-     * @param    code opt    option code, use <tt>DHO_*</tt> for predefined values.
-     * @param    buf    raw buffer value (cloned). If null, the option is removed.
-     */
-    public void setOptionRaw(byte code, byte[] buf) {
-        if (buf == null) {        // clear parameter
-            this.removeOption(code);
-        } else {
-            this.setOption(new DHCPOption(code, buf));    // exception here if code=0 or code=-1
-        }
-    }
     /**
      * Sets the option specified for the option.
      *
@@ -2070,45 +1194,12 @@ public final class DHCPPacket implements Cloneable, Serializable {
     }
 
     /**
-     * Sets an array of options. Calles repeatedly setOption on each element of the array.
-     *
-     * @param    opts    array of options.
-     */
-    public void setOptions(DHCPOption[] opts) {
-        if (opts != null) {
-            for (DHCPOption opt : opts) {
-                this.setOption(opt);
-            }
-        }
-    }
-
-    /**
-     * Sets a Collection of options. Calles repeatedly setOption on each element of the List.
-     *
-     * @param    opts    List of options.
-     */
-    public void setOptions(Collection<DHCPOption> opts) {
-        if (opts != null) {
-            for (DHCPOption opt : opts) {
-                this.setOption(opt);
-            }
-        }
-    }
-
-    /**
      * Remove this option from the options list.
      *
      * @param opt the option code to remove.
      */
     public void removeOption(byte opt) {
         this.options.remove(opt);
-    }
-
-    /**
-     * Remove all options.
-     */
-    public void removeAllOptions() {
-        this.options.clear();
     }
 
     /**
@@ -2120,22 +1211,6 @@ public final class DHCPPacket implements Cloneable, Serializable {
      */
     public InetAddress getAddress() {
         return this.address;
-    }
-
-    /**
-     * Sets the IP address of the machine to which this datagram is being sent.
-     *
-     * @param address the <tt>InetAddress</tt>.
-     * @throws IllegalArgumentException address is not of <tt>Inet4Address</tt> class.
-     */
-    public void setAddress(InetAddress address) {
-    	if (address == null) {
-    		this.address = null;
-    	} else if (!(address instanceof Inet4Address)) {
-            throw new IllegalArgumentException("only IPv4 addresses accepted");
-        } else {
-        	this.address = address;
-        }
     }
 
     /**
@@ -2156,30 +1231,6 @@ public final class DHCPPacket implements Cloneable, Serializable {
      */
     public void setPort(int port) {
         this.port = port;
-    }
-    
-    /**
-     * Syntactic sugar for getAddress/getPort.
-     * 
-     * @return address + port.
-     */
-    public InetSocketAddress getAddrPort() {
-    	return new InetSocketAddress(address, port);
-    }
-    
-    /**
-     * Syntactic sugar for setAddress/setPort.
-     * 
-     * @param addrPort address and port, if <tt>null</t> address is set to null and port to 0
-     */
-    public void setAddrPort(InetSocketAddress addrPort) {
-    	if (addrPort == null) {
-    		setAddress(null);
-    		setPort(0);
-    	} else {
-    		setAddress(addrPort.getAddress());
-    		setPort(addrPort.getPort());
-    	}
     }
 
     // ========================================================================
@@ -2259,38 +1310,6 @@ public final class DHCPPacket implements Cloneable, Serializable {
     }
 
     /**
-     * Convert bytes to hex string.
-     * 
-     * @param buf
-     * @return hex string (lowercase) or "" if buf is <tt>null</tt>
-     */
-    static String bytes2Hex(byte[] buf) {
-    	if (buf == null) {
-    		return "";
-    	}
-    	StringBuilder sb = new StringBuilder(buf.length * 2);
-    	appendHex(sb, buf);
-    	return sb.toString();
-    }
-    
-    /**
-     * Convert hes String to byte[]
-     */
-    static byte[] hex2Bytes(String s) {
-        if ((s.length() & 1) != 0) {
-            throw new IllegalArgumentException("String length must be even: " + s.length());
-        }
-
-        byte[] buf = new byte[s.length() / 2];
-
-        for (int index = 0; index < buf.length; index++) {
-            final int stringIndex = index << 1;
-            buf[index] = (byte) Integer.parseInt(s.substring(stringIndex, stringIndex + 2), 16);
-        }
-        return buf;
-    }
-
-    /**
      * Convert integer to hex chars (uppercase) and appends them to a string builder
      */
     private static void appendHex(StringBuilder sbuf, int i) {
@@ -2314,7 +1333,7 @@ public final class DHCPPacket implements Cloneable, Serializable {
     }
 
     /**
-     * Even faster version than {@link #getHostAddress} when the address is not
+     * Even faster version than when the address is not
      * the only piece of information put in the string.
      *
      * @param sbuf the string builder
@@ -2339,14 +1358,4 @@ public final class DHCPPacket implements Cloneable, Serializable {
             .append(src[3] & 0xFF);
     }
 
-    /**
-     * Faster version than <tt>InetAddress.getHostAddress()</tt>.
-     *
-     * @return String representation of address.
-     */
-    public static String getHostAddress(InetAddress addr) {
-        StringBuilder sbuf = new StringBuilder(15);
-        appendHostAddress(sbuf, addr);
-        return sbuf.toString();
-    }
 }
