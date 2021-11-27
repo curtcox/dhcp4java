@@ -45,7 +45,7 @@ import java.util.logging.Logger;
  * 
  * Immutable object.
  */
-public class DHCPOption implements Serializable {
+public final class DHCPOption implements Serializable {
 	private static final long   serialVersionUID = 2L;
     private static final Logger logger = Logger.getLogger(DHCPOption.class.getName().toLowerCase());
 

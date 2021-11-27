@@ -27,7 +27,7 @@ import java.util.Arrays;
  * @author Stephan Hadinger
  * @version 1.00
  */
-public class HardwareAddress implements Serializable {
+public final class HardwareAddress implements Serializable {
 
 	private static final long serialVersionUID = 2L;
 	

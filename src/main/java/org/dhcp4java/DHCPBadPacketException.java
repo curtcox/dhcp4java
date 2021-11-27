@@ -30,7 +30,7 @@ package org.dhcp4java;
  * @author Stephan Hadinger
  * @version 1.00
  */
-public class DHCPBadPacketException extends IllegalArgumentException {
+public final class DHCPBadPacketException extends IllegalArgumentException {
 	private static final long serialVersionUID = 1L;
 	
     /**

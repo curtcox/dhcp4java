@@ -17,7 +17,6 @@
  *	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package org.dhcp4java.examples;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.dhcp4java.DHCPPacket;
@@ -32,7 +31,7 @@ import org.dhcp4java.DHCPServlet;
  * @author Stephan Hadinger
  * @version 1.00
  */
-public class DHCPSnifferServlet extends DHCPServlet {
+public final class DHCPSnifferServlet extends DHCPServlet {
 
     private static final Logger logger = Logger.getLogger("org.dhcp4java.examples.dhcpsnifferservlet");
     
@@ -54,12 +53,8 @@ public class DHCPSnifferServlet extends DHCPServlet {
      * 
      * @param args
      */
-    public static void main(String[] args) {
-        try {
-            DHCPCoreServer server = DHCPCoreServer.initServer(new DHCPSnifferServlet(), null);
-            new Thread(server).start();
-        } catch (DHCPServerInitException e) {
-            logger.log(Level.SEVERE, "Server init", e);
-        }
+    public static void main(String[] args) throws DHCPServerInitException {
+        DHCPCoreServer server = DHCPCoreServer.initServer(new DHCPSnifferServlet(), null);
+        new Thread(server).start();
     }
 }

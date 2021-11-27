@@ -67,7 +67,7 @@ import java.util.logging.Logger;
  * @author Stephan Hadinger
  * @version 1.00
  */
-public class DHCPCoreServer implements Runnable {
+public final class DHCPCoreServer implements Runnable {
 
     private static final Logger logger = Logger.getLogger(DHCPCoreServer.class.getName().toLowerCase());
     private   static final int    BOUNDED_QUEUE_SIZE = 20;
@@ -349,7 +349,7 @@ public class DHCPCoreServer implements Runnable {
 /**
  * Servlet dispatcher
  */
-class DHCPServletDispatcher implements Runnable {
+final class DHCPServletDispatcher implements Runnable {
     private static final Logger logger = Logger.getLogger(DHCPServletDispatcher.class.getName().toLowerCase());
 
     private final DHCPCoreServer     server;

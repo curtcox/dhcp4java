@@ -24,7 +24,7 @@ package org.dhcp4java;
  * @author Stephan Hadinger
  * @version 1.00
  */
-public class DHCPServerInitException extends Exception {
+public final class DHCPServerInitException extends Exception {
 	private static final long serialVersionUID = 1L;
 	
 	/**

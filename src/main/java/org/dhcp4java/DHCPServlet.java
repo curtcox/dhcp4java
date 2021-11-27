@@ -39,6 +39,7 @@ import static org.dhcp4java.DHCPConstants.*;
  * @version 1.00
  */
 public class DHCPServlet {
+
     private static final Logger logger = Logger.getLogger(DHCPServlet.class.getName().toLowerCase());
     
     /** the server instance running this servlet */

@@ -31,7 +31,7 @@ import static org.dhcp4java.DHCPConstants.*;
  * @author Stephan Hadinger
  * @version 1.00
  */
-public class DHCPClient {
+public final class DHCPClient {
     private static byte[] macAddress = {
         (byte) 0x00, (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04, (byte) 0x05
     };

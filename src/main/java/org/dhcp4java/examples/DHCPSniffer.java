@@ -18,13 +18,12 @@
  */
 package org.dhcp4java.examples;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
 import org.dhcp4java.DHCPConstants;
 import org.dhcp4java.DHCPPacket;
-
-
 
 /**
  * A simple DHCP sniffer.
@@ -32,25 +31,19 @@ import org.dhcp4java.DHCPPacket;
  * @author Stephan Hadinger
  * @version 1.00
  */
-public class DHCPSniffer {
-    private DHCPSniffer() {
-    	throw new UnsupportedOperationException();
-    }
+public final class DHCPSniffer {
 
-    public static void main(String[] args) {
-        try {
-            DatagramSocket socket = new DatagramSocket(DHCPConstants.BOOTP_REQUEST_PORT);
+    public static void main(String[] args) throws IOException {
+        DatagramSocket socket = new DatagramSocket(DHCPConstants.BOOTP_REQUEST_PORT);
 
-            while (true) {
-                DatagramPacket pac = new DatagramPacket(new byte[1500], 1500);
-                DHCPPacket     dhcp;
+        System.out.println("Starting");
+        while (true) {
+            DatagramPacket pac = new DatagramPacket(new byte[1500], 1500);
+            DHCPPacket     dhcp;
 
-                socket.receive(pac);
-                dhcp = DHCPPacket.getPacket(pac);
-                System.out.println(dhcp.toString());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+            socket.receive(pac);
+            dhcp = DHCPPacket.getPacket(pac);
+            System.out.println(dhcp);
         }
     }
 }

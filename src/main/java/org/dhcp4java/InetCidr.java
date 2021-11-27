@@ -33,7 +33,7 @@ import org.dhcp4java.Util;
  * @version 1.00
  *
  */
-public class InetCidr implements Serializable, Comparable<InetCidr> {
+public final class InetCidr implements Serializable, Comparable<InetCidr> {
 	private static final long serialVersionUID = 1L;
 
     private final int addr;

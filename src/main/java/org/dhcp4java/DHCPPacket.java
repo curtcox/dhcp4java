@@ -286,7 +286,7 @@ import static org.dhcp4java.DHCPConstants.*;
  * <p><b>Future extensions</b>: IPv6 support, extended data structure TODO...
  * 
  */
-public class DHCPPacket implements Cloneable, Serializable {
+public final class DHCPPacket implements Cloneable, Serializable {
 	private static final long   serialVersionUID = 1L;
 
     private static final Logger logger = Logger.getLogger(DHCPPacket.class.getName().toLowerCase());
