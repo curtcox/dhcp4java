@@ -27,8 +27,6 @@ import java.io.Serializable;
 import java.net.DatagramPacket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -293,7 +291,7 @@ public final class DHCPPacket implements Cloneable, Serializable {
     
     // ----------------------------------------------------------------------
     // user defined comment
-    private String  comment;   // Free user-defined comment
+    private final String  comment;   // Free user-defined comment
 
     // ----------------------------------------------------------------------
     // static structure of the packet
@@ -365,7 +363,6 @@ public final class DHCPPacket implements Cloneable, Serializable {
      * @return the newly create <tt>DHCPPacket</tt> instance
      * @throws DHCPBadPacketException the datagram is malformed and cannot be parsed properly.
      * @throws IllegalArgumentException datagram is <tt>null</tt>
-     * @throws IOException
      */
     public static DHCPPacket getPacket(DatagramPacket datagram) throws DHCPBadPacketException {
     	if (datagram == null) {
@@ -374,8 +371,8 @@ public final class DHCPPacket implements Cloneable, Serializable {
         DHCPPacket packet = new DHCPPacket();
         // all parameters are checked in marshall()
         packet.marshall(datagram.getData(), datagram.getOffset(), datagram.getLength(),
-                        datagram.getAddress(), datagram.getPort(),
-                        true);		// strict mode by default
+                        datagram.getAddress(), datagram.getPort()
+        );		// strict mode by default
         return packet;
     }
 
@@ -528,19 +525,17 @@ public final class DHCPPacket implements Cloneable, Serializable {
      * Convert a specified byte array containing a DHCP message into a
      * DHCPMessage object.
      * 
-     * @return a DHCPMessage object with information from byte array.
      * @param  buffer  byte array to convert to a DHCPMessage object
      * @param  offset starting offset for the buffer
      * @param  length length of the buffer
      * @param  address0 the address from which the packet was sent, or <tt>null</tt>
      * @param  port0 the port from which the packet was sent
-     * @param  strict do we read in strict mode?
      * @throws IllegalArgumentException if buffer is <tt>null</tt>...
      * @throws IndexOutOfBoundsException offset..offset+length is out of buffer bounds
      * @throws DHCPBadPacketException datagram is malformed
      */
-    protected DHCPPacket marshall(byte[] buffer, int offset, int length,
-                                  InetAddress address0, int port0, boolean strict) {
+    private void marshall(byte[] buffer, int offset, int length,
+                          InetAddress address0, int port0) {
         // do some basic sanity checks
         // ibuff, offset & length are valid?
         if (buffer == null) {
@@ -623,7 +618,7 @@ public final class DHCPPacket implements Cloneable, Serializable {
                     this.setOption(new DHCPOption((byte) type, unit_opt));  // store option
                 }
                 this.truncated = (type != DHO_END); // truncated options?
-                if (strict && this.truncated) {
+                if (this.truncated) {
                 	throw new DHCPBadPacketException("Packet seams to be truncated");
                 }
             }
@@ -634,7 +629,6 @@ public final class DHCPPacket implements Cloneable, Serializable {
             // final verifications (if assertions are activated)
             this.assertInvariants();
 
-            return this;
         } catch (IOException e) {
             // unlikely with ByteArrayInputStream
             throw new DHCPBadPacketException("IOException: "+e.toString(), e);
@@ -659,17 +653,16 @@ public final class DHCPPacket implements Cloneable, Serializable {
         	minLen += _BOOTP_VEND_SIZE;
         }
     	
-    	return serialize(minLen, _DHCP_DEFAULT_MAX_LEN);
+    	return serialize(minLen);
     }
 
     /**
      * Converts the object to a byte array ready to be sent on the wire.
      *
-     * @param maxSize the maximum buffer size in bytes
      * @return a byte array with information from DHCPMessage object.
      * @throws DHCPBadPacketException the datagram would be malformed (too small, too big...)
      */
-    public byte[] serialize(int minSize, int maxSize) {
+    public byte[] serialize(int minSize) {
         this.assertInvariants();
         // prepare output buffer, pre-sized to maximum buffer length
         // default buffer is half the maximum size of possible packet
@@ -703,7 +696,6 @@ public final class DHCPPacket implements Cloneable, Serializable {
                     assert (opt.getCode() != DHO_END);
                     assert (opt.getValueFast() != null);
                     int size = opt.getValueFast().length;
-                    assert (size >= 0);
                     if (size > 255) {
                     	throw new DHCPBadPacketException("Options larger than 255 bytes are not yet supported");
                     }
@@ -737,7 +729,7 @@ public final class DHCPPacket implements Cloneable, Serializable {
         } catch (IOException e) {
             // nomrally impossible with ByteArrayOutputStream
             logger.log(Level.SEVERE, "Unexpected Exception", e);
-            throw new DHCPBadPacketException("IOException raised: "+e.toString());
+            throw new DHCPBadPacketException("IOException raised: "+ e);
         }
     }
 
@@ -846,11 +838,9 @@ public final class DHCPPacket implements Cloneable, Serializable {
      * <p>Only first <tt>hlen</tt> bytes are appended, as uppercase hex string.
      *
      * @param buffer this string buffer
-     * @return the string buffer.
      */
-    private StringBuilder appendChaddrAsHex(StringBuilder buffer) {
+    private void appendChaddrAsHex(StringBuilder buffer) {
         appendHex(buffer, this.chaddr, 0, this.hlen & 0xFF);
-        return buffer;
     }
     
     /**

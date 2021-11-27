@@ -76,19 +76,14 @@ public final class DHCPCoreServer implements Runnable {
     private static final int    PACKET_SIZE        = 1500;
 
     /** the servlet it must run */
-    private DHCPServlet        servlet;
+    private final DHCPServlet        servlet;
     /** working threads pool. */
     private ThreadPoolExecutor threadPool;
-    /** Consolidated parameters of the server. */
-    private Properties         properties;
     /** Reference of user-provided parameters */
-    private Properties         userProps;
-    /** IP address and port for the server */ 
-    private   InetSocketAddress sockAddress = null;
+    private final Properties         userProps;
     /** The socket for receiving and sending. */
     private   DatagramSocket     serverSocket;
-    /** do we need to stop the server? */
-    private   boolean			 stopped = false;
+
     /**
      * Constructor
      *
@@ -125,58 +120,59 @@ public final class DHCPCoreServer implements Runnable {
      *
      */
     private void init() throws DHCPServerInitException {
-        if (this.serverSocket != null) {
+        if (serverSocket != null) {
             throw new IllegalStateException("Server already initialized");
         }
 
         try {
-            // default built-in minimal properties
-            this.properties = new Properties(DEF_PROPS);
-
-            // try to load default configuration file
-            InputStream propFileStream = this.getClass().getResourceAsStream("/DHCPd.properties");
-            if (propFileStream != null) {
-            	this.properties.load(propFileStream);
-            } else {
-                logger.severe("Could not load /DHCPd.properties");
-            }
-
-            // now integrate provided properties
-            if (this.userProps != null) {
-                this.properties.putAll(this.userProps);
-            }
-
-            // load socket address, this method may be overriden
-            sockAddress = this.getInetSocketAddress(this.properties);
-            if (sockAddress == null) {
-                throw new DHCPServerInitException("Cannot find which SockAddress to open");
-            }
-
-            // open socket for listening and sending
-            this.serverSocket = new DatagramSocket(null);
-            this.serverSocket.setBroadcast(true);		// allow sending broadcast
-            this.serverSocket.bind(sockAddress);
-
-            // initialize Thread Pool
-            int numThreads = Integer.valueOf(this.properties.getProperty(SERVER_THREADS));
-            int maxThreads = Integer.valueOf(this.properties.getProperty(SERVER_THREADS_MAX));
-            int keepaliveThreads = Integer.valueOf(this.properties.getProperty(SERVER_THREADS_KEEPALIVE));
-            this.threadPool = new ThreadPoolExecutor(numThreads, maxThreads,
-                                                     keepaliveThreads, TimeUnit.MILLISECONDS,
-                                                     new ArrayBlockingQueue<Runnable>(BOUNDED_QUEUE_SIZE),
-                                                     new ServerThreadFactory());
-            this.threadPool.prestartAllCoreThreads();
-
-            // now intialize the servlet
-            this.servlet.setServer(this);
-            this.servlet.init(this.properties);
-        } catch (DHCPServerInitException e) {
-        	throw e;		// transparently re-throw
+            initSteps();
         } catch (Exception e) {
             this.serverSocket = null;
             logger.log(Level.SEVERE, "Cannot open socket", e);
             throw new DHCPServerInitException("Unable to init server", e);
         }
+    }
+
+    private void initSteps() throws IOException {
+        // default built-in minimal properties
+        // Consolidated parameters of the server.
+        Properties properties = new Properties(DEF_PROPS);
+
+        // try to load default configuration file
+        InputStream propFileStream = this.getClass().getResourceAsStream("/DHCPd.properties");
+        if (propFileStream != null) {
+            properties.load(propFileStream);
+        } else {
+            logger.severe("Could not load /DHCPd.properties");
+        }
+
+        // now integrate provided properties
+        if (this.userProps != null) {
+            properties.putAll(this.userProps);
+        }
+
+        // load socket address, this method may be overriden
+        // IP address and port for the server
+        InetSocketAddress sockAddress = this.getInetSocketAddress(properties);
+
+        // open socket for listening and sending
+        serverSocket = new DatagramSocket(null);
+        serverSocket.setBroadcast(true);		// allow sending broadcast
+        serverSocket.bind(sockAddress);
+
+        // initialize Thread Pool
+        int numThreads = Integer.parseInt(properties.getProperty(SERVER_THREADS));
+        int maxThreads = Integer.parseInt(properties.getProperty(SERVER_THREADS_MAX));
+        int keepaliveThreads = Integer.parseInt(properties.getProperty(SERVER_THREADS_KEEPALIVE));
+        threadPool = new ThreadPoolExecutor(numThreads, maxThreads,
+                                                 keepaliveThreads, TimeUnit.MILLISECONDS,
+                                                 new ArrayBlockingQueue<Runnable>(BOUNDED_QUEUE_SIZE),
+                                                 new ServerThreadFactory());
+        threadPool.prestartAllCoreThreads();
+
+        // now intialize the servlet
+        servlet.setServer(this);
+        servlet.init();
     }
 
     /*
@@ -222,7 +218,7 @@ public final class DHCPCoreServer implements Runnable {
 
         try {
 	        // sending back
-            this.serverSocket.send(responseDatagram);
+            serverSocket.send(responseDatagram);
 	    } catch (IOException e) {
 	        logger.log(Level.SEVERE, "IOException", e);
 	    }
@@ -286,9 +282,11 @@ public final class DHCPCoreServer implements Runnable {
         if (this.serverSocket == null) {
             throw new IllegalStateException("Listening socket is not open - terminating");
         }
-        while (!this.stopped) {
+        // do we need to stop the server?
+        boolean stopped = false;
+        while (!stopped) {
             try {
-                this.dispatch();		// do the stuff
+                dispatch();		// do the stuff
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Unexpected Exception", e);
             }

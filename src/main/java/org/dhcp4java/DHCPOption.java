@@ -519,11 +519,9 @@ public final class DHCPOption implements Serializable {
                               .append('"');
                         break;
                     case BYTES:
-                        if (this.value != null) {
-                            for (byte aValue : this.value) {
-                                buffer.append(unsignedByte(aValue))
-                                      .append(' ');
-                            }
+                        for (byte aValue : this.value) {
+                            buffer.append(unsignedByte(aValue))
+                                  .append(' ');
                         }
                         break;
         		default:
@@ -602,9 +600,9 @@ public final class DHCPOption implements Serializable {
             return null;
         }
         
-        List list = userClassToList(buf);
-        Iterator it = list.iterator();
-        StringBuffer s = new StringBuffer();
+        List<String> list = userClassToList(buf);
+        Iterator<String> it = list.iterator();
+        StringBuilder s = new StringBuilder();
         
         while (it.hasNext()) {
             s.append('"').append((String) it.next()).append('"');
@@ -627,7 +625,7 @@ public final class DHCPOption implements Serializable {
     	}
     	
         Map<Byte, String> map = agentOptionsToMap(buf);
-        StringBuffer s = new StringBuffer();
+        StringBuilder s = new StringBuilder();
         for (Entry<Byte, String> entry : map.entrySet()) {
             s.append('{').append(unsignedByte(entry.getKey())).append("}\"");
             s.append(entry.getValue()).append('\"');
@@ -807,7 +805,7 @@ public final class DHCPOption implements Serializable {
         String string1 = "";
 
         for (Byte codeByte : _DHO_NAMES.keySet()) {
-            byte code = codeByte.byteValue();
+            byte code = codeByte;
             String s = "";
             if (code != DHO_PAD && code != DHO_END) {
                 s = " * " + _DHO_NAMES.get(codeByte) + '(' + (code & 0xFF) + ")\n";

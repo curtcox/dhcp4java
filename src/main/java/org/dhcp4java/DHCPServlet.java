@@ -20,7 +20,6 @@ package org.dhcp4java;
 
 import java.net.DatagramPacket;
 import java.net.InetAddress;
-import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -52,10 +51,9 @@ public class DHCPServlet {
      * A properties is passed to the servlet to read whatever parameters it needs.
      * 
      * <p>There is no default behaviour.
-     * 
-     * @param props a Properties containing parameters, as passed to <tt>DHCPCoreServer</tt> 
+     *
      */
-    final public void init(Properties props) {
+    final public void init() {
         // read whatever parameters you need
     }
     
@@ -72,47 +70,11 @@ public class DHCPServlet {
      * @return response the datagram to send back, or <tt>null</tt> if no answer
      */
     final public DatagramPacket serviceDatagram(DatagramPacket requestDatagram) {
-        DatagramPacket responseDatagram;
-    	
+
         if (requestDatagram == null) { return null; }
 
         try {
-            // parse DHCP request
-            DHCPPacket request = DHCPPacket.getPacket(requestDatagram);
-
-            if (request == null) { return null; }	// nothing much we can do
-
-            if (logger.isLoggable(Level.FINER)) {
-                logger.finer(request.toString());
-            }
-
-            // do the real work
-            DHCPPacket response = this.service(request); // call service function
-            // done
-            if (logger.isLoggable(Level.FINER)) {
-                logger.finer("service() done");
-            }
-            if (response == null) { return null; }
-
-            // check address/port
-            InetAddress address = response.getAddress();
-            if (address == null) {
-                logger.warning("Address needed in response");
-                return null;
-            }
-            int port = response.getPort();
-
-            // we have something to send back
-            byte[] responseBuf = response.serialize();
-
-            if (logger.isLoggable(Level.FINER)) { logger.finer("Buffer is " + responseBuf.length + " bytes long"); }
-
-            responseDatagram = new DatagramPacket(responseBuf, responseBuf.length, address, port);
-            if (logger.isLoggable(Level.FINER)) {
-                logger.finer("Sending back to" + address.getHostAddress() + '(' + port + ')');
-            }
-            this.postProcess(requestDatagram, responseDatagram);
-            return responseDatagram;
+            return getDatagramPacket(requestDatagram);
         } catch (DHCPBadPacketException e) {
             logger.log(Level.INFO, "Invalid DHCP packet received", e);
         } catch (Exception e) {
@@ -121,6 +83,50 @@ public class DHCPServlet {
 
         // general fallback, we do nothing
         return null;
+    }
+
+    private DatagramPacket getDatagramPacket(DatagramPacket requestDatagram) {
+        DatagramPacket responseDatagram;
+        // parse DHCP request
+        DHCPPacket request = DHCPPacket.getPacket(requestDatagram);
+
+        if (request == null) {
+            return null;
+        }	// nothing much we can do
+
+        if (logger.isLoggable(Level.FINER)) {
+            logger.finer(request.toString());
+        }
+
+        // do the real work
+        DHCPPacket response = this.service(request); // call service function
+        // done
+        if (logger.isLoggable(Level.FINER)) {
+            logger.finer("service() done");
+        }
+        if (response == null) {
+            return null;
+        }
+
+        // check address/port
+        InetAddress address = response.getAddress();
+        if (address == null) {
+            logger.warning("Address needed in response");
+            return null;
+        }
+        int port = response.getPort();
+
+        // we have something to send back
+        byte[] responseBuf = response.serialize();
+
+        if (logger.isLoggable(Level.FINER)) { logger.finer("Buffer is " + responseBuf.length + " bytes long"); }
+
+        responseDatagram = new DatagramPacket(responseBuf, responseBuf.length, address, port);
+        if (logger.isLoggable(Level.FINER)) {
+            logger.finer("Sending back to" + address.getHostAddress() + '(' + port + ')');
+        }
+        this.postProcess(requestDatagram, responseDatagram);
+        return responseDatagram;
     }
 
     /**
@@ -181,7 +187,7 @@ public class DHCPServlet {
      * @param request DHCP request received from client
      * @return DHCP response to send back, or <tt>null</tt> if no response.
      */
-    final protected DHCPPacket doDiscover(DHCPPacket request) {
+    private DHCPPacket doDiscover(DHCPPacket request) {
         logger.fine("DISCOVER packet received");
         return null;
     }
@@ -192,7 +198,7 @@ public class DHCPServlet {
      * @param request DHCP request received from client
      * @return DHCP response to send back, or <tt>null</tt> if no response.
      */
-    final protected DHCPPacket doRequest(DHCPPacket request) {
+    private DHCPPacket doRequest(DHCPPacket request) {
         logger.fine("REQUEST packet received");
         return null;
     }
@@ -203,7 +209,7 @@ public class DHCPServlet {
      * @param request DHCP request received from client
      * @return DHCP response to send back, or <tt>null</tt> if no response.
      */
-    final protected DHCPPacket doInform(DHCPPacket request) {
+    private DHCPPacket doInform(DHCPPacket request) {
         logger.fine("INFORM packet received");
         return null;
     }
@@ -214,7 +220,7 @@ public class DHCPServlet {
      * @param request DHCP request received from client
      * @return DHCP response to send back, or <tt>null</tt> if no response.
      */
-    final protected DHCPPacket doDecline(DHCPPacket request) {
+    private DHCPPacket doDecline(DHCPPacket request) {
         logger.fine("DECLINE packet received");
         return null;
     }
@@ -225,25 +231,25 @@ public class DHCPServlet {
      * @param request DHCP request received from client
      * @return DHCP response to send back, or <tt>null</tt> if no response.
      */
-    final protected DHCPPacket doRelease(DHCPPacket request) {
+    private DHCPPacket doRelease(DHCPPacket request) {
         logger.fine("RELEASE packet received");
         return null;
     }
 
     /**
      * You have a chance to catch response before it is sent back to client.
-     * 
-     * <p>This allows for example for last minute modification (who knows?) 
+     *
+     * <p>This allows for example for last minute modification (who knows?)
      * or for specific logging.
-     * 
+     *
      * <p>Default behaviour is to do nothing.
-     * 
+     *
      * <p>The only way to block the response from being sent is to raise an exception.
-     * 
+     *
      * @param requestDatagram datagram received from client
      * @param responseDatagram datagram sent back to client
      */
-    final protected void postProcess(DatagramPacket requestDatagram, DatagramPacket responseDatagram) {
+    private void postProcess(DatagramPacket requestDatagram, DatagramPacket responseDatagram) {
         // default is nop
     }
 
