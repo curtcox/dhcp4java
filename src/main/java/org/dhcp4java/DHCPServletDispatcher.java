@@ -22,10 +22,13 @@ final class DHCPServletDispatcher implements Runnable {
 
     public void run() {
         try {
-            DatagramPacket response = this.dispatchServlet.serviceDatagram(this.dispatchPacket);
-            this.server.sendResponse(response);
+            respondToPacket();
         } catch (Exception e) {
             logger.log(Level.FINE, "Exception in dispatcher", e);
         }
+    }
+
+    private void respondToPacket() {
+        server.sendResponse(dispatchServlet.serviceDatagram(dispatchPacket));
     }
 }
