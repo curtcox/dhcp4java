@@ -19,44 +19,15 @@
 package org.dhcp4java;
 
 import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import static org.dhcp4java.DHCPConstants.*;
 
 /**
  * General Interface for a "DHCP Servlet"
- * 
- * <p>Normal use is to override the <tt>doXXX()</tt> or <tt>service()</tt> method
- * to provide your own application logic.
- * 
- * <p>For simple servers or test purpose, it as also a good idea to provide
- * a <tt>main()</tt> method so you can easily launch the server by running the servlet.
- * 
+ *
  * @author Stephan Hadinger
  * @version 1.00
  */
-public class DHCPServlet {
+public interface DHCPServlet {
 
-    private static final Logger logger = Logger.getLogger(DHCPServlet.class.getName().toLowerCase());
-    
-    /** the server instance running this servlet */
-    protected DHCPCoreServer server = null;
-    
-    /**
-     * Initialize servlet. Override this method to implement any initialization you may need.
-     * 
-     * <p>This method is called once at stratup, before any request is passed to the servlet.
-     * A properties is passed to the servlet to read whatever parameters it needs.
-     * 
-     * <p>There is no default behaviour.
-     *
-     */
-    final public void init() {
-        // read whatever parameters you need
-    }
-    
     /**
      * Low-level method for receiving a UDP Daragram and sending one back.
      * 
@@ -69,65 +40,7 @@ public class DHCPServlet {
      * @param requestDatagram the datagram received from the client
      * @return response the datagram to send back, or <tt>null</tt> if no answer
      */
-    final public DatagramPacket serviceDatagram(DatagramPacket requestDatagram) {
-
-        if (requestDatagram == null) { return null; }
-
-        try {
-            return getDatagramPacket(requestDatagram);
-        } catch (DHCPBadPacketException e) {
-            logger.log(Level.INFO, "Invalid DHCP packet received", e);
-        } catch (Exception e) {
-            logger.log(Level.INFO, "Unexpected Exception", e);
-        }
-
-        // general fallback, we do nothing
-        return null;
-    }
-
-    private DatagramPacket getDatagramPacket(DatagramPacket requestDatagram) {
-        DatagramPacket responseDatagram;
-        // parse DHCP request
-        DHCPPacket request = DHCPPacket.getPacket(requestDatagram);
-
-        if (request == null) {
-            return null;
-        }	// nothing much we can do
-
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer(request.toString());
-        }
-
-        // do the real work
-        DHCPPacket response = this.service(request); // call service function
-        // done
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer("service() done");
-        }
-        if (response == null) {
-            return null;
-        }
-
-        // check address/port
-        InetAddress address = response.getAddress();
-        if (address == null) {
-            logger.warning("Address needed in response");
-            return null;
-        }
-        int port = response.getPort();
-
-        // we have something to send back
-        byte[] responseBuf = response.serialize();
-
-        if (logger.isLoggable(Level.FINER)) { logger.finer("Buffer is " + responseBuf.length + " bytes long"); }
-
-        responseDatagram = new DatagramPacket(responseBuf, responseBuf.length, address, port);
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer("Sending back to" + address.getHostAddress() + '(' + port + ')');
-        }
-        this.postProcess(requestDatagram, responseDatagram);
-        return responseDatagram;
-    }
+    DatagramPacket serviceDatagram(DatagramPacket requestDatagram);
 
     /**
      * General method for parsing a DHCP request.
@@ -140,123 +53,6 @@ public class DHCPServlet {
      * @param request DHCP request from the client
      * @return response DHCP response to send back to client, <tt>null</tt> if no response
      */
-    protected DHCPPacket service(DHCPPacket request) {
-        Byte dhcpMessageType;
+    DHCPPacket service(DHCPPacket request);
 
-        if (request == null) {
-        	return null;
-        }
-
-        if (!request.isDhcp()) {
-            logger.info("BOOTP packet rejected");
-            return null;		// skipping old BOOTP
-        }
-
-        dhcpMessageType = request.getDHCPMessageType();
-
-        if (dhcpMessageType == null) {
-            logger.info("no DHCP message type");
-            return null;
-        }
-
-        if (request.getOp() == BOOTREQUEST) {
-            switch (dhcpMessageType) {
-            	case DHCPDISCOVER: return this.doDiscover(request);
-            	case DHCPREQUEST:  return this.doRequest(request);
-            	case DHCPINFORM:   return this.doInform(request);
-            	case DHCPDECLINE:  return this.doDecline(request);
-            	case DHCPRELEASE:  return this.doRelease(request);
-
-            	default:
-            	    logger.info("Unsupported message type " + dhcpMessageType);
-            	    return null;
-            }
-        } else if (request.getOp() == BOOTREPLY) {
-            // receiving a BOOTREPLY from a client is not normal
-            logger.info("BOOTREPLY received from client");
-            return null;
-        } else {
-            logger.warning("Unknown Op: " + request.getOp());
-            return null;	// ignore
-        }
-    }
-
-    /**
-     * Process DISCOVER request.
-     * 
-     * @param request DHCP request received from client
-     * @return DHCP response to send back, or <tt>null</tt> if no response.
-     */
-    private DHCPPacket doDiscover(DHCPPacket request) {
-        logger.fine("DISCOVER packet received");
-        return null;
-    }
-
-    /**
-     * Process REQUEST request.
-     * 
-     * @param request DHCP request received from client
-     * @return DHCP response to send back, or <tt>null</tt> if no response.
-     */
-    private DHCPPacket doRequest(DHCPPacket request) {
-        logger.fine("REQUEST packet received");
-        return null;
-    }
-
-    /**
-     * Process INFORM request.
-     * 
-     * @param request DHCP request received from client
-     * @return DHCP response to send back, or <tt>null</tt> if no response.
-     */
-    private DHCPPacket doInform(DHCPPacket request) {
-        logger.fine("INFORM packet received");
-        return null;
-    }
-
-    /**
-     * Process DECLINE request.
-     * 
-     * @param request DHCP request received from client
-     * @return DHCP response to send back, or <tt>null</tt> if no response.
-     */
-    private DHCPPacket doDecline(DHCPPacket request) {
-        logger.fine("DECLINE packet received");
-        return null;
-    }
-
-    /**
-     * Process RELEASE request.
-     * 
-     * @param request DHCP request received from client
-     * @return DHCP response to send back, or <tt>null</tt> if no response.
-     */
-    private DHCPPacket doRelease(DHCPPacket request) {
-        logger.fine("RELEASE packet received");
-        return null;
-    }
-
-    /**
-     * You have a chance to catch response before it is sent back to client.
-     *
-     * <p>This allows for example for last minute modification (who knows?)
-     * or for specific logging.
-     *
-     * <p>Default behaviour is to do nothing.
-     *
-     * <p>The only way to block the response from being sent is to raise an exception.
-     *
-     * @param requestDatagram datagram received from client
-     * @param responseDatagram datagram sent back to client
-     */
-    private void postProcess(DatagramPacket requestDatagram, DatagramPacket responseDatagram) {
-        // default is nop
-    }
-
-	/**
-	 * @param server The server to set.
-	 */
-    final public void setServer(DHCPCoreServer server) {
-		this.server = server;
-	}
 }

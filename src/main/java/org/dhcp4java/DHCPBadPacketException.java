@@ -34,12 +34,6 @@ public final class DHCPBadPacketException extends IllegalArgumentException {
 	private static final long serialVersionUID = 1L;
 	
     /**
-     * Constructs an <tt>DHCPBadPacketException</tt> with no detail message.
-     */
-    public DHCPBadPacketException() {
-    	// empty constructor
-    }
-    /**
      * Constructs an <tt>DHCPBadPacketException</tt> with the specified detail message.
      * 
      * @param message the detail message.
@@ -47,6 +41,7 @@ public final class DHCPBadPacketException extends IllegalArgumentException {
     public DHCPBadPacketException(String message) {
         super(message);
     }
+
     /**
      * Constructs a new exception with the specified detail message and cause.
      * 
