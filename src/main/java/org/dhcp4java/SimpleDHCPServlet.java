@@ -26,16 +26,7 @@ import java.util.logging.Logger;
 import static org.dhcp4java.DHCPConstants.*;
 
 /**
- * General Interface for a "DHCP Servlet"
- * 
- * <p>Normal use is to override the <tt>doXXX()</tt> or <tt>service()</tt> method
- * to provide your own application logic.
- * 
- * <p>For simple servers or test purpose, it as also a good idea to provide
- * a <tt>main()</tt> method so you can easily launch the server by running the servlet.
- * 
- * @author Stephan Hadinger
- * @version 1.00
+ * Simple implementation of DHCPServlet.
  */
 public final class SimpleDHCPServlet implements DHCPServlet {
 
@@ -144,11 +135,11 @@ public final class SimpleDHCPServlet implements DHCPServlet {
 
         if (request.getOp() == BOOTREQUEST) {
             switch (dhcpMessageType) {
-            	case DHCPDISCOVER: return this.doDiscover(request);
-            	case DHCPREQUEST:  return this.doRequest(request);
-            	case DHCPINFORM:   return this.doInform(request);
-            	case DHCPDECLINE:  return this.doDecline(request);
-            	case DHCPRELEASE:  return null;
+            	case DHCPDISCOVER: return discover(request);
+            	case DHCPREQUEST:  return request(request);
+            	case DHCPINFORM:   return inform(request);
+            	case DHCPDECLINE:  return decline(request);
+            	case DHCPRELEASE:  return release(request);
 
             	default:
             	    logger.info("Unsupported message type " + dhcpMessageType);
@@ -164,49 +155,11 @@ public final class SimpleDHCPServlet implements DHCPServlet {
         }
     }
 
-    /**
-     * Process DISCOVER request.
-     *
-     * @param request DHCP request received from client
-     * @return DHCP response to send back, or <tt>null</tt> if no response.
-     */
-    private DHCPPacket doDiscover(DHCPPacket request) {
-        logger.fine("DISCOVER packet received");
-        return null;
-    }
-
-    /**
-     * Process REQUEST request.
-     *
-     * @param request DHCP request received from client
-     * @return DHCP response to send back, or <tt>null</tt> if no response.
-     */
-    private DHCPPacket doRequest(DHCPPacket request) {
-        logger.fine("REQUEST packet received");
-        return null;
-    }
-
-    /**
-     * Process INFORM request.
-     *
-     * @param request DHCP request received from client
-     * @return DHCP response to send back, or <tt>null</tt> if no response.
-     */
-    private DHCPPacket doInform(DHCPPacket request) {
-        logger.fine("INFORM packet received");
-        return null;
-    }
-
-    /**
-     * Process DECLINE request.
-     *
-     * @param request DHCP request received from client
-     * @return DHCP response to send back, or <tt>null</tt> if no response.
-     */
-    private DHCPPacket doDecline(DHCPPacket request) {
-        logger.fine("DECLINE packet received");
-        return null;
-    }
+    DHCPPacket discover(DHCPPacket request) { return null; }
+    DHCPPacket request(DHCPPacket request) { return null; }
+    DHCPPacket inform(DHCPPacket request) { return null; }
+    DHCPPacket decline(DHCPPacket request) { return null; }
+    DHCPPacket release(DHCPPacket request) { return null;}
 
     public static void main(String[] args) throws Exception {
         DHCPCoreServer.initServer(new SimpleDHCPServlet()).run();

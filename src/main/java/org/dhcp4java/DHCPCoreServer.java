@@ -37,14 +37,15 @@ import java.util.logging.Logger;
  */
 public final class DHCPCoreServer implements Runnable {
 
-    private static final Logger logger = Logger.getLogger(DHCPCoreServer.class.getName().toLowerCase());
-    /** default MTU for ethernet */
-    private static final int    PACKET_SIZE        = 1500;
 
     /** the servlet it must run */
     private final DHCPServlet        servlet;
     private final ExecutorService threadPool = Executors.newFixedThreadPool(4);
     private final DatagramSocket     serverSocket;
+
+    /** default MTU for ethernet */
+    private static final int    PACKET_SIZE        = 1500;
+    private static final Logger logger = Logger.getLogger(DHCPCoreServer.class.getName().toLowerCase());
 
     private DHCPCoreServer(DHCPServlet servlet, DatagramSocket serverSocket) {
         this.servlet = servlet;
@@ -53,12 +54,6 @@ public final class DHCPCoreServer implements Runnable {
 
     /**
      * Creates and initializes a new DHCP Server.
-     *
-     * <p>It instanciates the object, then calls <tt>init()</tt> method.
-     *
-     * @param servlet the <tt>DHCPServlet</tt> instance processing incoming requests,
-     * 			must not be <tt>null</tt>.
-     * @return the new <tt>DHCPCoreServer</tt> instance (never null).
      */
     public static DHCPCoreServer initServer(DHCPServlet servlet) throws IOException {
     	return new DHCPCoreServer(servlet,initSteps());
@@ -75,45 +70,14 @@ public final class DHCPCoreServer implements Runnable {
         return serverSocket;
     }
 
-    private void dispatch() {
-        try {
-            DatagramPacket requestDatagram = new DatagramPacket(
-                    new byte[PACKET_SIZE], PACKET_SIZE);
-            logger.finer("Waiting for packet");
-
-            // receive datagram
-            this.serverSocket.receive(requestDatagram);
-
-            if (logger.isLoggable(Level.FINER)) {
-                StringBuilder sbuf = new StringBuilder("Received packet from ");
-
-                DHCPPacket.appendHostAddress(sbuf, requestDatagram.getAddress());
-                sbuf.append('(')
-                    .append(requestDatagram.getPort())
-                    .append(')');
-                logger.finer(sbuf.toString());
-            }
-
-            // send work to thread pool
-            DHCPServletDispatcher dispatcher = new DHCPServletDispatcher(this, servlet, requestDatagram);
-            threadPool.execute(dispatcher);
-        } catch (IOException e) {
-	        logger.log(Level.FINE, "IOException", e);
-        }
-    }
-
     /**
      * Send back response packet to client.
-     *
-     * <p>This is a callback method used by servlet dispatchers to send back responses.
      */
-    protected void sendResponse(DatagramPacket responseDatagram) {
-        if (responseDatagram == null) {
-            return; // skipping
-        }
-
+    void sendResponse(DatagramPacket responseDatagram) {
         try {
-	        // sending back
+            if (responseDatagram == null) {
+                return;
+            }
             serverSocket.send(responseDatagram);
 	    } catch (IOException e) {
 	        logger.log(Level.SEVERE, "IOException", e);
@@ -123,19 +87,25 @@ public final class DHCPCoreServer implements Runnable {
     /**
      * This is the main loop for accepting new request and delegating work to
      * servlets in different threads.
-     *
      */
     public void run() {
-        if (this.serverSocket == null) {
-            throw new IllegalStateException("Listening socket is not open - terminating");
-        }
         while (true) {
             try {
-                dispatch();		// do the stuff
+                threadPool.execute(dispatcher());
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Unexpected Exception", e);
             }
         }
+    }
+
+    private DHCPServletDispatcher dispatcher() throws IOException {
+        DatagramPacket requestDatagram = new DatagramPacket(new byte[PACKET_SIZE], PACKET_SIZE);
+
+        // receive datagram
+        serverSocket.receive(requestDatagram);
+
+        // send work to thread pool
+        return new DHCPServletDispatcher(this, servlet, requestDatagram);
     }
 
 }
