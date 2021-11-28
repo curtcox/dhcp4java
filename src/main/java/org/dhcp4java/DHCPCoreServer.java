@@ -44,10 +44,11 @@ public final class DHCPCoreServer implements Runnable {
     /** the servlet it must run */
     private final DHCPServlet        servlet;
     private final ExecutorService threadPool = Executors.newFixedThreadPool(4);
-    private   DatagramSocket     serverSocket;
+    private final DatagramSocket     serverSocket;
 
-    private DHCPCoreServer(DHCPServlet servlet) {
+    private DHCPCoreServer(DHCPServlet servlet, DatagramSocket serverSocket) {
         this.servlet = servlet;
+        this.serverSocket = serverSocket;
     }
 
     /**
@@ -58,40 +59,20 @@ public final class DHCPCoreServer implements Runnable {
      * @param servlet the <tt>DHCPServlet</tt> instance processing incoming requests,
      * 			must not be <tt>null</tt>.
      * @return the new <tt>DHCPCoreServer</tt> instance (never null).
-     * @throws DHCPServerInitException unable to start the server.
      */
-    public static DHCPCoreServer initServer(DHCPServlet servlet) throws DHCPServerInitException {
-    	DHCPCoreServer server = new DHCPCoreServer(servlet);
-    	server.init();
-    	return server;
+    public static DHCPCoreServer initServer(DHCPServlet servlet) throws IOException {
+    	return new DHCPCoreServer(servlet,initSteps());
     }
 
-    /**
-     * Initialize the server context from the Properties, and open socket.
-     *
-     */
-    private void init() throws DHCPServerInitException {
-        if (serverSocket != null) {
-            throw new IllegalStateException("Server already initialized");
-        }
-
-        try {
-            initSteps();
-        } catch (Exception e) {
-            this.serverSocket = null;
-            logger.log(Level.SEVERE, "Cannot open socket", e);
-            throw new DHCPServerInitException("Unable to init server", e);
-        }
-    }
-
-    private void initSteps() throws IOException {
+    private static DatagramSocket initSteps() throws IOException {
 
         InetSocketAddress sockAddress = new InetSocketAddress("127.0.0.1", 67);
 
         // open socket for listening and sending
-        serverSocket = new DatagramSocket(null);
+        DatagramSocket serverSocket = new DatagramSocket(null);
         serverSocket.setBroadcast(true);		// allow sending broadcast
         serverSocket.bind(sockAddress);
+        return serverSocket;
     }
 
     private void dispatch() {

@@ -208,7 +208,7 @@ public final class SimpleDHCPServlet implements DHCPServlet {
         return null;
     }
 
-    public static void main(String[] args) throws DHCPServerInitException {
+    public static void main(String[] args) throws Exception {
         DHCPCoreServer.initServer(new SimpleDHCPServlet()).run();
     }
 }
